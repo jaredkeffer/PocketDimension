@@ -5,17 +5,21 @@ using UnityEngine;
 public class Creator : MonoBehaviour
 {
     private Vector2 moveInput;
-    private float moveTime = 0.1f;
+    private float moveTime = 0.01f;
+    private float rotaitonTime = 0.01f;
     private int moveSize = 2;
     private bool isMoving = false;
     private bool isPlacing = false;
-    private float delayTime = 0.01f;
+    private float delayTime = 0.02f;
     private List<GameObject> blocks = new List<GameObject>();
     private GameObject blockContainer;
     public GameObject block;
+    private Rigidbody rb;
+    public float jumpForce;
     
     void Start() {
         blockContainer = GameObject.Find("Blocks");  
+        rb = GetComponent<Rigidbody>();
     }
     void Update()
     {
@@ -26,47 +30,52 @@ public class Creator : MonoBehaviour
         }
         if (!isMoving) {
             if (moveInput.y > 0) {
-                StartCoroutine(Move("up", moveTime));
-            }
-            else if (moveInput.y < 0) {
-                StartCoroutine(Move("down", moveTime));            
-            }
-            else if (moveInput.x > 0) {
-                // StartCoroutine(Move("right", moveTime));
-                StartCoroutine(Rotate("right", moveTime));
-            }
-            else if (moveInput.x < 0) {
-                // StartCoroutine(Move("left", moveTime)); 
-                StartCoroutine(Rotate("left", moveTime));
-            }
-            else if (Input.GetKey(KeyCode.Space)) {
                 StartCoroutine(Move("forward", moveTime));
             }
-            else if (Input.GetKey(KeyCode.LeftShift)) {
+            else if (moveInput.y < 0) {
                 StartCoroutine(Move("backward", moveTime));            
             }
+            else if (moveInput.x > 0) {
+                StartCoroutine(Move("right", moveTime));
+                // StartCoroutine(Rotate("right", rotaitonTime));
+            }
+            else if (moveInput.x < 0) {
+                StartCoroutine(Move("left", moveTime)); 
+                // StartCoroutine(Rotate("left", rotaitonTime));
+            }
+            else if (Input.GetKey(KeyCode.Space)) {
+                // StartCoroutine(Move("up", moveTime));
+                Jump();
+            }
+            else if (Input.GetKey(KeyCode.LeftShift)) {
+                StartCoroutine(Move("down", moveTime));            
+            }
             else if (Input.GetKey(KeyCode.Q)) {
-                StartCoroutine(Rotate("left", moveTime));
+                StartCoroutine(Rotate("left", rotaitonTime));
             }
             else if (Input.GetKey(KeyCode.E)) {
-                StartCoroutine(Rotate("right", moveTime));
+                StartCoroutine(Rotate("right", rotaitonTime));
             }
             else if (Input.GetKey(KeyCode.Z)) {
-                StartCoroutine(Rotate("backwards", moveTime));
+                StartCoroutine(Rotate("backwards", rotaitonTime));
             }
             else if (Input.GetKey(KeyCode.C)) {
-                StartCoroutine(Rotate("forwards", moveTime));
+                StartCoroutine(Rotate("forwards", rotaitonTime));
             }
         }
     }
     private IEnumerator Delay(float _delayTime) {
         float t = 0;
         while (t <= 1) {
-            t += 0.1f;
+            t += 0.5f;
             yield return new WaitForSeconds(_delayTime);
         }
         isMoving = false;
         yield return null;
+    }
+    private void Jump () {
+        rb.velocity = new Vector3 (rb.velocity.x, jumpForce, rb.velocity.z);
+        Debug.Log(rb.velocity);
     }
     private IEnumerator Move(string direction, float time) {
         isMoving = true;
@@ -93,12 +102,13 @@ public class Creator : MonoBehaviour
         }
         float t = 0;
         while (t <= 1) {
-            t += time;
+            t += 0.1f;
             transform.position = Vector3.Lerp(oldPos, moveVector, t);
-            yield return new WaitForSeconds(0.01f);
+            yield return new WaitForSeconds(time);
         }
         isPlacing = false;
         StartCoroutine(Delay(delayTime));
+        // isMoving = false;
         Debug.Log(transform.position);
         yield return null;
     }
@@ -108,10 +118,10 @@ public class Creator : MonoBehaviour
         Vector3 oldRotation = transform.eulerAngles;
         Vector3 newRotation = new Vector3(oldRotation.x,oldRotation.y,oldRotation.z);
         if (direction == "left") {
-            newRotation = new Vector3(oldRotation.x, oldRotation.y - 90, oldRotation.z);
+            newRotation = new Vector3(oldRotation.x, oldRotation.y + 90, oldRotation.z);
         }
         else if (direction == "right") {
-            newRotation = new Vector3(oldRotation.x, oldRotation.y + 90,oldRotation.z);
+            newRotation = new Vector3(oldRotation.x, oldRotation.y - 90,oldRotation.z);
         }
         else if (direction == "backwards") {
             newRotation = new Vector3(oldRotation.x - 90, oldRotation.y, oldRotation.z);
@@ -121,9 +131,9 @@ public class Creator : MonoBehaviour
         }
         float t = 0;
         while (t <= 1) {
-            t += time;
+            t += 0.05f;
             transform.eulerAngles = Vector3.Lerp(oldRotation, newRotation, t);
-            yield return new WaitForSeconds(0.01f);
+            yield return new WaitForSeconds(time);
         }
         isPlacing = false;
         StartCoroutine(Delay(delayTime));
